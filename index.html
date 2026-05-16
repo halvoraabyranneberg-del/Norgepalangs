@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Norge på langs – Pappa</title>
+    <title>Norge på langs i etapper</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
@@ -211,7 +211,19 @@
         .previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px,1fr)); gap: 8px; margin-top: 10px; }
         .prev-item { position: relative; aspect-ratio: 1; }
         .prev-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; }
-        .prev-item .rm { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; background: rgba(0,0,0,.75); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .prev-item .rm { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; background: rgba(0,0,0,.75); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+        .prev-item .rm:hover { background: rgba(255,45,78,.9); }
+        .prev-item .saved-badge { position: absolute; bottom: 3px; left: 3px; background: rgba(46,204,113,.85); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: .3px; }
+
+        /* Info page */
+        .info-section { background: var(--card); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid var(--border); border-radius: 22px; margin-bottom: 28px; overflow: hidden; box-shadow: var(--sh); }
+        .info-section-head { display: flex; align-items: center; gap: 12px; padding: 20px 26px; border-bottom: 1px solid var(--border); }
+        .info-section-head .icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .info-section-head .icon-blue { background: rgba(77,142,255,.15); color: var(--blue); }
+        .info-section-head .icon-green { background: rgba(46,204,113,.15); color: var(--green); }
+        .info-section-head h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+        .info-body { padding: 22px 26px; font-size: 15px; line-height: 1.85; color: #c8d6e8; white-space: pre-wrap; }
+        .info-empty { color: var(--muted); font-style: italic; }
 
         /* Admin trip list */
         .admin-trip-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; background: rgba(255,255,255,.02); transition: border-color .2s; }
@@ -319,6 +331,7 @@
     <nav>
         <button class="active" id="tnav-kart"  onclick="showTab('kart')"><i class="fa fa-map"></i> Kart</button>
         <button            id="tnav-turer" onclick="showTab('turer')"><i class="fa fa-person-hiking"></i> Etapper</button>
+        <button            id="tnav-info"  onclick="showTab('info')"><i class="fa fa-circle-info"></i> Info</button>
         <button            id="tnav-admin" onclick="showTab('admin')"><i class="fa fa-lock"></i> Pappa</button>
     </nav>
 </header>
@@ -330,10 +343,38 @@
 <div class="tab" id="tab-turer">
     <div class="trips-wrap">
         <div class="sec-header">
-            <h2 class="sec-title">Alle etapper</h2>
+            <h2 class="sec-title">Norge på langs i etapper</h2>
             <p class="sec-sub">Følg reisen dag for dag</p>
         </div>
         <div id="trips-list"><div class="empty"><i class="fa fa-spinner fa-spin"></i><h3>Laster…</h3></div></div>
+    </div>
+</div>
+
+<!-- ═══ INFO ═══ -->
+<div class="tab" id="tab-info">
+    <div class="trips-wrap">
+        <div class="sec-header">
+            <h2 class="sec-title">Om turen</h2>
+            <p class="sec-sub">Regler, utstyr og matvalg for Norge på langs</p>
+        </div>
+
+        <div class="info-section">
+            <div class="trip-accent"></div>
+            <div class="info-section-head">
+                <div class="icon icon-blue"><i class="fa fa-clipboard-list"></i></div>
+                <h3>📋 Regler</h3>
+            </div>
+            <div class="info-body" id="info-rules-display"><span class="info-empty">Regler ikke lagt inn ennå.</span></div>
+        </div>
+
+        <div class="info-section">
+            <div class="trip-accent"></div>
+            <div class="info-section-head">
+                <div class="icon icon-green"><i class="fa fa-backpack"></i></div>
+                <h3>🎒 Utstyr og mat</h3>
+            </div>
+            <div class="info-body" id="info-gear-display"><span class="info-empty">Utstyrsliste ikke lagt inn ennå.</span></div>
+        </div>
     </div>
 </div>
 
@@ -423,6 +464,21 @@
                 <div id="admin-trip-list"><p style="color:var(--muted);font-size:14px">Ingen etapper ennå.</p></div>
             </div>
 
+            <!-- Info-sider -->
+            <div class="acard">
+                <h3><i class="fa fa-circle-info"></i> Rediger info-sider</h3>
+                <div class="fg">
+                    <label>📋 Regler for Norge på langs</label>
+                    <textarea id="a-rules" style="min-height:180px" placeholder="Skriv reglene her, f.eks.:&#10;• Gå hele strekningen til fots&#10;• Ruten skal følge godkjent DNT-trasé&#10;…"></textarea>
+                </div>
+                <div class="fg" style="margin-top:4px">
+                    <label>🎒 Utstyr og mat</label>
+                    <textarea id="a-gear" style="min-height:180px" placeholder="Skriv om utstyr og mat, f.eks.:&#10;• Fjellstøvler Scarpa Zodiac Plus&#10;• Sekk 65L med rammestativ&#10;• Frysetørket mat for 3 dager&#10;…"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveInfo()"><i class="fa fa-floppy-disk"></i> Lagre info-sider</button>
+                <div id="info-alert"></div>
+            </div>
+
             <!-- Innstillinger -->
             <div class="acard">
                 <h3><i class="fa fa-gear"></i> Innstillinger</h3>
@@ -491,7 +547,8 @@ const ROUTE = [
 
 /* ── STATE ── */
 let settings={passwordHash:null,dadName:'Pappa',totalKm:DEFAULT_KM};
-let trips=[], loggedIn=false, pendingPhotos=[];
+let trips=[], loggedIn=false, pendingPhotos=[], existingPhotos=[];
+let infoContent={rules:'',gear:''};
 let mainMap=null, pickerMap=null, pickMode='start';
 let startMarker=null, endMarker=null;
 let lbPhotos=[], lbIdx=0;
@@ -536,6 +593,31 @@ function startListeners(){
         trips=snap.docs.map(d=>({id:d.id,...d.data()}));
         updateStats();renderTrips();drawMapContent();if(loggedIn)renderAdminList();
     });
+    db.collection('config').doc('info').onSnapshot(snap=>{
+        if(snap.exists){infoContent=snap.data();}else{infoContent={rules:'',gear:''};}
+        renderInfoPage();
+        if(loggedIn){
+            document.getElementById('a-rules').value=infoContent.rules||'';
+            document.getElementById('a-gear').value=infoContent.gear||'';
+        }
+    });
+}
+
+function renderInfoPage(){
+    const rEl=document.getElementById('info-rules-display');
+    const gEl=document.getElementById('info-gear-display');
+    if(rEl)rEl.innerHTML=infoContent.rules?esc(infoContent.rules).replace(/\n/g,'<br>'):'<span class="info-empty">Regler ikke lagt inn ennå.</span>';
+    if(gEl)gEl.innerHTML=infoContent.gear?esc(infoContent.gear).replace(/\n/g,'<br>'):'<span class="info-empty">Utstyrsliste ikke lagt inn ennå.</span>';
+}
+
+async function saveInfo(){
+    const rules=document.getElementById('a-rules').value;
+    const gear=document.getElementById('a-gear').value;
+    const al=document.getElementById('info-alert');
+    try{
+        await db.collection('config').doc('info').set({rules,gear});
+        showAlert(al,'Info-sider lagret! ✅','ok');
+    }catch(e){showAlert(al,'Feil: '+e.message,'err');}
 }
 
 /* ── STATS + COUNTER ANIMATION ── */
@@ -588,9 +670,18 @@ function drawMapContent(){
             L.marker([t.startLat,t.startLng],{icon:dotIcon('#2ecc71',10,false)}).bindPopup(`<div class="mpop"><h3>🏁 ${esc(t.startLocation||'Start')}</h3><p>${fmtShort(t.startDate)}</p></div>`).addTo(mainMap);
         if(t.endLat&&t.endLng)
             L.marker([t.endLat,t.endLng],{icon:dotIcon('#ff2d4e',isLast?22:10,isLast)})
-                .bindPopup(`<div class="mpop"><h3>${isLast?'📍 ':''}${esc(t.endLocation||'Slutt')}</h3><p>${fmtShort(t.endDate)}</p><p class="km">+${t.km} km · totalt ${Math.round(cumul)} km</p>${t.description?`<p style="margin-top:6px;font-size:13px">${esc(t.description).substring(0,110)}…</p>`:''}</div>`)
+                .bindPopup(`<div class="mpop"><h3>${isLast?'📍 ':''}${esc(t.endLocation||'Slutt')}</h3><p>${fmtShort(t.endDate)}</p><p class="km">+${t.km} km · totalt ${Math.round(cumul)} km</p>${t.description?`<p style="margin-top:6px;font-size:13px">${esc(t.description).substring(0,110)}…</p>`:''}<button onclick="goToTrip('${t.id}')" style="margin-top:10px;padding:7px 14px;background:rgba(77,142,255,.18);border:1px solid rgba(77,142,255,.35);color:#4d8eff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;width:100%;font-family:Inter,sans-serif"><i class="fa fa-arrow-right"></i> Les etappe</button></div>`)
                 .addTo(mainMap);
     });
+}
+
+/* ── GO TO TRIP ── */
+function goToTrip(id){
+    showTab('turer');
+    setTimeout(()=>{
+        const el=document.getElementById('card-'+id);
+        if(el){el.scrollIntoView({behavior:'smooth',block:'start'});el.style.outline='2px solid var(--blue)';setTimeout(()=>el.style.outline='',1800);}
+    },250);
 }
 
 /* ── PICKER MAP ── */
@@ -704,8 +795,13 @@ async function addComment(tid){
 /* ── PHOTOS ── */
 async function handleFiles(e){for(const f of[...e.target.files]){if(f.size>20*1024*1024){alert('For stort: '+f.name);continue;}pendingPhotos.push(await compress(f,900,.75));}renderPreviews();e.target.value='';}
 function compress(file,maxDim,q){return new Promise(res=>{const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{let{width:w,height:h}=img;if(w>maxDim||h>maxDim){if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',q));};img.src=ev.target.result;};r.readAsDataURL(file);});}
-function renderPreviews(){document.getElementById('previews').innerHTML=pendingPhotos.map((p,i)=>`<div class="prev-item"><img src="${p}"/><button class="rm" onclick="rmPhoto(${i})"><i class="fa fa-xmark"></i></button></div>`).join('');}
+function renderPreviews(){
+    const exHtml=existingPhotos.map((p,i)=>`<div class="prev-item"><img src="${p}"/><span class="saved-badge">Lagret</span><button class="rm" title="Slett bilde" onclick="rmExistingPhoto(${i})"><i class="fa fa-trash"></i></button></div>`).join('');
+    const newHtml=pendingPhotos.map((p,i)=>`<div class="prev-item"><img src="${p}"/><button class="rm" onclick="rmPhoto(${i})"><i class="fa fa-xmark"></i></button></div>`).join('');
+    document.getElementById('previews').innerHTML=exHtml+newHtml;
+}
 function rmPhoto(i){pendingPhotos.splice(i,1);renderPreviews();}
+function rmExistingPhoto(i){if(!confirm('Slett dette bildet fra etappen?'))return;existingPhotos.splice(i,1);renderPreviews();}
 
 /* ── SAVE / UPDATE TRIP ── */
 async function saveTrip(){
@@ -724,9 +820,7 @@ async function saveTrip(){
     try{
         const data={title:title||(sl+' → '+el),startDate:sd,startLocation:sl,startLat:isNaN(slat)?null:slat,startLng:isNaN(slng)?null:slng,endDate:ed,endLocation:el,endLat:isNaN(elat)?null:elat,endLng:isNaN(elng)?null:elng,km,description:desc};
         if(editingTripId){
-            // Keep existing photos + any new ones
-            const existing=trips.find(t=>t.id===editingTripId);
-            const existingPhotos=existing?.photos||[];
+            // Keep surviving existing photos + any new ones added
             await db.collection('trips').doc(editingTripId).update({...data,photos:[...existingPhotos,...pendingPhotos]});
             showAlert(al,'Etappe oppdatert! ✅','ok');
             cancelEdit();
@@ -745,7 +839,7 @@ function resetForm(){
     ['a-title','a-startloc','a-startlat','a-startlng','a-endloc','a-endlat','a-endlng','a-km','a-desc'].forEach(x=>document.getElementById(x).value='');
     const today=new Date().toISOString().split('T')[0];
     document.getElementById('a-startdate').value=today;document.getElementById('a-enddate').value=today;
-    pendingPhotos=[];renderPreviews();
+    pendingPhotos=[];existingPhotos=[];renderPreviews();
     if(startMarker&&pickerMap){pickerMap.removeLayer(startMarker);startMarker=null;}
     if(endMarker&&pickerMap){pickerMap.removeLayer(endMarker);endMarker=null;}
 }
@@ -765,7 +859,7 @@ function editTrip(id){
     document.getElementById('a-endlng').value   = t.endLng||'';
     document.getElementById('a-km').value       = t.km||'';
     document.getElementById('a-desc').value     = t.description||'';
-    pendingPhotos=[];renderPreviews();
+    pendingPhotos=[];existingPhotos=[...(t.photos||[])];renderPreviews();
     document.getElementById('form-heading').innerHTML='<i class="fa fa-pen"></i> Rediger etappe';
     document.getElementById('save-btn').innerHTML='<i class="fa fa-floppy-disk"></i> Lagre endringer';
     document.getElementById('cancel-edit-btn').style.display='';
@@ -818,6 +912,8 @@ async function doLogin(){
     document.getElementById('tnav-admin').innerHTML='<i class="fa fa-unlock"></i> Pappa';
     document.getElementById('s-name').value=settings.dadName||'Pappa';
     document.getElementById('s-totalkm').value=settings.totalKm||DEFAULT_KM;
+    document.getElementById('a-rules').value=infoContent.rules||'';
+    document.getElementById('a-gear').value=infoContent.gear||'';
     const today=new Date().toISOString().split('T')[0];
     document.getElementById('a-startdate').value=today;document.getElementById('a-enddate').value=today;
     renderAdminList();setTimeout(()=>{initPickerMap();pickerMap.invalidateSize();},150);
@@ -860,6 +956,7 @@ function showTab(name){
     document.getElementById('tnav-'+name).classList.add('active');
     if(name==='kart')setTimeout(()=>{if(!mainMap)initMap();else mainMap.invalidateSize();},50);
     if(name==='admin'&&loggedIn)setTimeout(()=>{if(!pickerMap)initPickerMap();else pickerMap.invalidateSize();},150);
+    if(name==='info')renderInfoPage();
 }
 
 /* ── INIT ── */
